@@ -6,47 +6,47 @@ on:
 
 jobs:
   build:
-    # Ubuntu 22.04 seçdik, çünki 24.04-də "Broken pipe" xətası olur.
-    # Bu versiya ən stabilidir.
     runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
-      # Python 3.10 -> Kivy ilə ən yaxşı işləyən versiya
+      # Keşlənmiş və xarab olmuş faylları silirik (502 xətasının dərmanı)
+      - name: Clean Buildozer Cache
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # Java 17 -> Android API 34 (Android 14/15) üçün vacibdir
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # Sistem kitabxanalarını yükləyirik (Buildozer işləsin deyə)
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev
           sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           sudo apt-get install -y libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          sudo apt-get install -y unzip zip autoconf libtool pkg-config
+          sudo apt-get install -y unzip zip autoconf libtool pkg-config git
 
-      # Buildozer və lazımi Python alətləri
+      # DİQQƏT: Cython versiyasını sərbəst buraxdıq (Kivy 2.3.0 üçün vacibdir)
       - name: Install Buildozer & Libraries
         run: |
           pip install --upgrade pip
-          pip install buildozer Cython
+          pip install buildozer
+          pip install "Cython>=3.0.0"
 
-      # APK-nı bişiririk
-      # yes komandası lisenziyaları avtomatik qəbul edir
+      # APK bişiririk
       - name: Build with Buildozer
         run: yes | buildozer android debug
 
-      # Hazır APK-nı sənə təqdim edirik
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
